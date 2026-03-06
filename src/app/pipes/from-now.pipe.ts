@@ -9,6 +9,13 @@ import moment from 'moment';
 export class FromNowPipe implements PipeTransform {
   transform(value: string): string {
     if (!value) return '';
-    return moment(value).fromNow();
+    const start = moment(value);
+    const diffInSeconds = start.diff(moment(), 'seconds');
+
+    if (diffInSeconds > 0 && diffInSeconds < 60) {
+      return `dans ${diffInSeconds} secondes`;
+    }
+
+    return start.fromNow();
   }
 }
