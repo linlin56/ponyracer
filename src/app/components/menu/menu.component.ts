@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { UserService } from '../../services/user.service';
 
+// la navbar de l'application, présente sur toutes les pages
 @Component({
   selector: 'app-menu',
   standalone: true,
@@ -47,6 +48,10 @@ import { UserService } from '../../services/user.service';
     }
   `,
 })
+
+// Le menu de l'application contient des liens vers les pages
+// et affiche le nom de l'utilisateur connecté ainsi que son argent.
+// Il permet aussi de se déconnecter.
 export class MenuComponent {
   private userService = inject(UserService);
   currentUser = this.userService.currentUser;

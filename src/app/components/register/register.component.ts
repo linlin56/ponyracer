@@ -1,8 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, Injector, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { UserService } from '../../services/user.service';
 
+// configuration du composant d'inscription
 @Component({
   selector: 'app-register',
   standalone: true,
@@ -11,9 +12,11 @@ import { UserService } from '../../services/user.service';
     <div class="row justify-content-center mt-5">
       <div class="col-md-5">
         <h2>Register</h2>
+        <!-- affichage du message d'erreur si présent -->
         @if (error()) {
           <div class="alert alert-danger">{{ error() }}</div>
         }
+        <!-- formulaire d'inscription avec liaison bidirectionnelle ngModel -->
         <form (ngSubmit)="onSubmit()">
           <div class="form-group mb-3">
             <label for="login">Login</label>
@@ -56,26 +59,39 @@ import { UserService } from '../../services/user.service';
   `,
 })
 export class RegisterComponent {
+  // services injectés nécessaires à l'inscription et à la navigation
+  private injector = inject(Injector);
   private userService = inject(UserService);
   private router = inject(Router);
 
+  // champs du formulaire
   login = '';
   password = '';
-  birthYear: number = new Date().getFullYear() - 20;
+  birthYear: number = new Date().getFullYear() - 20; // par défaut 20 ans
+  // signaux pour état local
   loading = signal(false);
   error = signal('');
 
+  // appelé lorsque le formulaire est soumis
   onSubmit(): void {
     this.loading.set(true);
     this.error.set('');
-    this.userService.register(this.login, this.password, this.birthYear).subscribe({
-      next: () => this.router.navigate(['/races']),
-      error: (err) => {
-        this.error.set(
-          err.status === 417 ? 'Ce login est déjà utilisé.' : 'Une erreur est survenue.',
-        );
+    const sig = this.userService.register(this.login, this.password, this.birthYear);
+    effect(
+      () => {
+        const user = sig();
+        if (user === undefined) {
+          return;
+        }
+        if (user) {
+          this.loading.set(false);
+          this.router.navigate(['/races']);
+          return;
+        }
         this.loading.set(false);
+        this.error.set('Une erreur est survenue.');
       },
-    });
+      { injector: this.injector },
+    );
   }
 }

@@ -1,9 +1,8 @@
 import { NgStyle } from '@angular/common';
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, effect, inject, Injector, OnDestroy, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Subscription } from 'rxjs';
 import { PonyModel } from '../../models/pony.model';
-import { RaceModel, RacePositionModel } from '../../models/race.model';
+import { RaceModel } from '../../models/race.model';
 import { RaceService } from '../../services/race.service';
 import { UserService } from '../../services/user.service';
 import { WsService } from '../../services/ws.service';
@@ -19,6 +18,14 @@ import { PonyComponent } from '../pony/pony.component';
         <i class="fa fa-spinner fa-spin fa-3x"></i>
       </div>
     }
+    @if (error()) {
+      <div class="alert alert-danger mt-3">
+        {{ error() }}
+        <div class="mt-2">
+          <a routerLink="/races" class="btn btn-primary btn-sm">Retour aux courses</a>
+        </div>
+      </div>
+    }
     @if (race()) {
       <div class="mt-3">
         <h2>{{ race()!.name }}</h2>
@@ -26,22 +33,20 @@ import { PonyComponent } from '../pony/pony.component';
         @if (status() === 'FINISHED') {
           <div class="alert alert-info">
             <h4>Course terminée !</h4>
+            <!-- Affichage des gagnants -->
             @if (winners().length) {
               <p>
                 Gagnant(s) :
                 @for (w of winners(); track w.id) {
-                  <strong>{{ w.name }}</strong>
+                  <i class="fa fa-trophy" style="color: gold"></i>
+                  <strong> {{ w.name }} </strong>
+                  <i class="fa fa-trophy" style="color: gold"></i>
                 }
               </p>
             }
             <a routerLink="/races" class="btn btn-primary mt-2">Retour aux courses</a>
           </div>
         }
-
-        @if (error()) {
-          <div class="alert alert-danger">{{ error() }}</div>
-        }
-
         <div class="race-track">
           @for (pony of ponies(); track pony.id) {
             <div class="pony-lane ">
@@ -69,6 +74,11 @@ import { PonyComponent } from '../pony/pony.component';
             Cliquez sur votre poney parié pour lui donner un boost !
           </p>
         }
+      </div>
+    }
+    @if (!loading() && !race() && !error()) {
+      <div class="alert alert-warning mt-3">
+        La course en direct est indisponible pour le moment.
       </div>
     }
   `,
@@ -113,6 +123,7 @@ import { PonyComponent } from '../pony/pony.component';
   ],
 })
 export class LiveComponent implements OnInit, OnDestroy {
+  private injector = inject(Injector);
   private raceService = inject(RaceService);
   private wsService = inject(WsService);
   private userService = inject(UserService);
@@ -125,57 +136,89 @@ export class LiveComponent implements OnInit, OnDestroy {
   loading = signal(true);
   error = signal('');
 
-  private wsSub?: Subscription;
+  // nous n'avons plus besoin de stocker l'abonnement manuellement;
+  // les effets remplacent les observables
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('raceId'));
-    this.raceService.get(id).subscribe({
-      next: (race) => {
-        this.race.set(race);
-        this.ponies.set(race.ponies.map((p) => ({ ...p, position: 0 })));
-        this.status.set(race.status);
-        this.loading.set(false);
-        this.connectWs(race);
-      },
-      error: () => {
-        this.error.set('Impossible de récupérer la course.');
-        this.loading.set(false);
-      },
-    });
-  }
+    const cachedRace = this.raceService.currentRace();
+    if (cachedRace?.id === id) {
+      this.applyRace(cachedRace);
+    }
 
-  private connectWs(race: RaceModel): void {
-    this.wsSub = this.wsService.connect(race).subscribe({
-      next: (data: RacePositionModel) => {
+    const fetchedRace = this.raceService.get(id);
+
+    let connected = false;
+    // l'effet s'exécute dès que la course est disponible, depuis le cache du service ou l'API
+    effect(
+      () => {
+        const fetched = fetchedRace();
+        if (fetched) {
+          this.race.set(fetched);
+        }
+
+        const r = this.race();
+        if (!r || connected) return;
+        this.applyRace(r);
+        this.wsService.connect(r);
+        connected = true;
+      },
+      { injector: this.injector },
+    );
+
+    effect(
+      () => {
+        const data = this.wsService.raceUpdates();
+        if (!data) return;
         this.ponies.set(data.ponies);
         this.status.set(data.status);
         if (data.status === 'FINISHED') {
-          const maxPos = Math.max(...data.ponies.map((p) => p.position ?? 0));
-          this.winners.set(data.ponies.filter((p) => p.position === maxPos));
+          const maxPos = Math.max(...data.ponies.map((p: PonyModel) => p.position ?? 0));
+          this.winners.set(data.ponies.filter((p: PonyModel) => p.position === maxPos));
           this.updateUserScore();
         }
       },
-      error: () => this.error.set('Connexion WebSocket perdue.'),
-    });
+      { injector: this.injector },
+    );
+
+    effect(
+      () => {
+        const updated = this.wsService.scoreUpdates();
+        if (updated) {
+          this.userService.currentUser.set(updated);
+        }
+      },
+      { injector: this.injector },
+    );
+
+    setTimeout(() => {
+      if (!this.race()) {
+        this.loading.set(false);
+        this.error.set('Impossible de charger la course en direct.');
+      }
+    }, 3000);
+  }
+
+  private applyRace(race: RaceModel): void {
+    this.loading.set(false);
+    this.race.set(race);
+    this.ponies.set(race.ponies.map((p: PonyModel) => ({ ...p, position: p.position ?? 0 })));
+    this.status.set(race.status);
   }
 
   private updateUserScore(): void {
     const user = this.userService.currentUser();
     if (!user) return;
-    this.wsService.connectForScore(user).subscribe({
-      next: (updatedUser) => {
-        this.userService.currentUser.set(updatedUser);
-      },
-    });
+    this.wsService.connectForScore(user);
   }
 
   onBoost(pony: PonyModel): void {
     const r = this.race();
     if (!r || r.betPonyId !== pony.id || this.status() !== 'RUNNING') return;
-    this.raceService.boost(r.id, pony.id).subscribe();
+    this.raceService.boost(r.id, pony.id);
   }
 
   ngOnDestroy(): void {
-    this.wsSub?.unsubscribe();
+    // plus d'abonnement manuel à annuler
   }
 }

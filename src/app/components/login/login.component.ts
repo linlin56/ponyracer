@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, Injector, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { UserService } from '../../services/user.service';
@@ -44,6 +44,7 @@ import { UserService } from '../../services/user.service';
   `,
 })
 export class LoginComponent {
+  private injector = inject(Injector);
   private userService = inject(UserService);
   private router = inject(Router);
 
@@ -55,12 +56,22 @@ export class LoginComponent {
   onSubmit(): void {
     this.loading.set(true);
     this.error.set('');
-    this.userService.authenticate(this.login, this.password).subscribe({
-      next: () => this.router.navigate(['/races']),
-      error: () => {
-        this.error.set('Identifiant ou mot de passe incorrect.');
+    const sig = this.userService.authenticate(this.login, this.password);
+    effect(
+      () => {
+        const user = sig();
+        if (user === undefined) {
+          return;
+        }
+        if (user) {
+          this.loading.set(false);
+          this.router.navigate(['/races']);
+          return;
+        }
         this.loading.set(false);
+        this.error.set('Identifiant ou mot de passe incorrect.');
       },
-    });
+      { injector: this.injector },
+    );
   }
 }

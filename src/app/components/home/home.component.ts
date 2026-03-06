@@ -12,6 +12,7 @@ import { RouterLink } from '@angular/router';
         <small class="text-muted"> Always a pleasure to bet on ponies</small>
       </h2>
       <p class="mt-3">
+        <!-- Les routes vers les différentes pages de l'application -->
         <a routerLink="/login" class="btn btn-primary mr-2">Login</a>
         <a routerLink="/register" class="btn btn-primary">Register</a>
       </p>

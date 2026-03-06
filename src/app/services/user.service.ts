@@ -1,6 +1,5 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Injectable, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Injectable, Signal, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { UserModel } from '../models/user.model';
 
@@ -18,16 +17,40 @@ export class UserService {
     return stored ? JSON.parse(stored) : null;
   }
 
-  register(login: string, password: string, birthYear: number): Observable<UserModel> {
-    return this.http
+  register(
+    login: string,
+    password: string,
+    birthYear: number,
+  ): Signal<UserModel | null | undefined> {
+    const sig = signal<UserModel | null | undefined>(undefined);
+    this.http
       .post<UserModel>(`${environment.baseUrl}/api/users`, { login, password, birthYear })
-      .pipe(tap((user) => this.storeUser(user)));
+      .subscribe({
+        next: (user) => {
+          this.storeUser(user);
+          sig.set(user);
+        },
+        error: () => {
+          sig.set(null);
+        },
+      });
+    return sig.asReadonly();
   }
 
-  authenticate(login: string, password: string): Observable<UserModel> {
-    return this.http
+  authenticate(login: string, password: string): Signal<UserModel | null | undefined> {
+    const sig = signal<UserModel | null | undefined>(undefined);
+    this.http
       .post<UserModel>(`${environment.baseUrl}/api/users/authentication`, { login, password })
-      .pipe(tap((user) => this.storeUser(user)));
+      .subscribe({
+        next: (user) => {
+          this.storeUser(user);
+          sig.set(user);
+        },
+        error: () => {
+          sig.set(null);
+        },
+      });
+    return sig.asReadonly();
   }
 
   logout(): void {

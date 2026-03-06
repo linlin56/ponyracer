@@ -77,6 +77,7 @@ export class PonyComponent {
     img.src = `https://placehold.co/70x70?text=${this.pony().color}`;
   }
 
+  // Quand on clique sur le poney, on émet un événement pour le booster
   onClick(): void {
     this.ponyClicked.emit(this.pony());
   }

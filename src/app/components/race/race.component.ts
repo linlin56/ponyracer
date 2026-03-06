@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, effect, inject, Injector, OnDestroy, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import moment from 'moment';
 import { PonyModel } from '../../models/pony.model';
@@ -11,15 +11,21 @@ import { PonyComponent } from '../pony/pony.component';
   standalone: true,
   imports: [RouterLink, PonyComponent],
   template: `
+    <!-- affiche un spinner pendant le chargement de la course -->
     @if (loading()) {
       <div class="text-center mt-5">
         <i class="fa fa-spinner fa-spin fa-3x"></i>
       </div>
     }
+    @if (betError() && !race()) {
+      <div class="alert alert-danger mt-3">{{ betError() }}</div>
+    }
+    <!-- une fois la course chargée, on expose les informations -->
     @if (race()) {
       <div class="mt-3">
         <h2>{{ race()!.name }}</h2>
 
+        <!-- si la course n'a pas démarré, on montre un compte à rebours -->
         @if (race()!.status === 'PENDING') {
           <p class="text-muted">
             <i class="fa fa-clock-o mr-1"></i>
@@ -30,12 +36,14 @@ import { PonyComponent } from '../pony/pony.component';
           </p>
         }
 
+        <!-- lien vers le live tant que la course est en cours ou achevée -->
         @if (race()!.status === 'RUNNING' || race()!.status === 'FINISHED') {
           <a [routerLink]="['/races', race()!.id, 'live']" class="btn btn-primary mb-3">
             Watch live!
           </a>
         }
 
+        <!-- messages d'erreur/succès lors du pari -->
         @if (betError()) {
           <div class="alert alert-danger">{{ betError() }}</div>
         }
@@ -44,6 +52,7 @@ import { PonyComponent } from '../pony/pony.component';
         }
 
         <p class="text-muted">Click to bet on your favorite pony</p>
+        <!-- liste des poneys disponibles pour parier -->
         <div class="d-flex flex-wrap gap-3">
           @for (pony of race()!.ponies; track pony.id) {
             <app-pony
@@ -54,6 +63,7 @@ import { PonyComponent } from '../pony/pony.component';
           }
         </div>
 
+        <!-- si un pari est fait, afficher le nom du poney parié et possibilité d'annuler -->
         @if (race()!.betPonyId) {
           <div class="mt-3">
             <p class="text-success">
@@ -65,6 +75,9 @@ import { PonyComponent } from '../pony/pony.component';
         }
       </div>
     }
+    @if (!loading() && !race() && !betError()) {
+      <div class="alert alert-warning mt-3">Impossible de charger cette course.</div>
+    }
   `,
   styles: [
     `
@@ -75,34 +88,56 @@ import { PonyComponent } from '../pony/pony.component';
   ],
 })
 export class RaceComponent implements OnInit, OnDestroy {
+  // dépendances injectées
+  private injector = inject(Injector);
   private raceService = inject(RaceService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
+  // signaux utilisés pour piloter l'interface
+  // signal local mutable que l'on utilisera pour les mises à jour
   race = signal<RaceModel | null>(null);
-  loading = signal(true);
-  betError = signal('');
-  betSuccess = signal('');
-  countdown = signal('');
+  loading = signal(true); // indicateur de chargement
+  betError = signal(''); // message d'erreur de pari
+  betSuccess = signal(''); // message de succès de pari
+  countdown = signal(''); // texte du compte à rebours
 
+  // référence de l'intervalle du compte à rebours pour pouvoir l'annuler
   private countdownInterval?: ReturnType<typeof setInterval>;
 
+  // au démarrage du composant on récupère l'id de la course
+  // puis on appelle le service pour charger les données
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('raceId'));
-    this.raceService.get(id).subscribe({
-      next: (race) => {
-        this.race.set(race);
-        this.loading.set(false);
-        if (race.status === 'RUNNING') {
-          this.router.navigate(['/races', race.id, 'live']);
-        } else if (race.status === 'PENDING') {
-          this.startCountdown(race);
+    const serviceRace = this.raceService.get(id); // signal fourni par le service
+
+    // synchroniser le signal local avec celui du service
+    effect(
+      () => {
+        const r = serviceRace();
+        if (r) {
+          this.loading.set(false);
+          this.race.set(r);
+          if (r.status === 'RUNNING') {
+            this.router.navigate(['/races', r.id, 'live']);
+          } else if (r.status === 'PENDING') {
+            this.startCountdown(r);
+          }
         }
       },
-      error: () => this.loading.set(false),
-    });
+      { injector: this.injector },
+    );
+
+    setTimeout(() => {
+      if (!this.race()) {
+        this.loading.set(false);
+        this.betError.set('Impossible de charger cette course.');
+      }
+    }, 3000);
   }
 
+  // Intervalle qui met à jour le texte du compte à rebours
+  // tant que le départ n'est pas passé; redirige vers le live à zéro.
   private startCountdown(race: RaceModel): void {
     const update = () => {
       const diff = moment(race.startInstant).diff(moment());
@@ -128,40 +163,56 @@ export class RaceComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // nettoyage
     clearInterval(this.countdownInterval);
   }
 
+  // déclenché lorsque l'utilisateur clique sur un poney pour parier
   onBet(pony: PonyModel): void {
     const r = this.race();
     if (!r || r.status !== 'PENDING') return;
     this.betError.set('');
     this.betSuccess.set('');
-    this.raceService.bet(r.id, pony.id).subscribe({
-      next: (updatedRace) => {
-        this.race.set(updatedRace);
-        this.betSuccess.set(`Pari placé sur ${pony.name} !`);
+    const sig = this.raceService.bet(r.id, pony.id);
+    effect(
+      () => {
+        const updated = sig();
+        if (updated) {
+          this.race.set(updated);
+          this.betSuccess.set(`Pari placé sur ${pony.name} ! Bonne chance.`);
+        }
       },
-      error: () => this.betError.set('Impossible de placer le pari.'),
-    });
+      { injector: this.injector },
+    );
   }
 
+  // annule le pari en cours via le service
   cancelBet(): void {
     const r = this.race();
     if (!r) return;
     this.betError.set('');
     this.betSuccess.set('');
-    this.raceService.cancelBet(r.id).subscribe({
-      next: () => {
-        this.race.update((race) => (race ? { ...race, betPonyId: undefined } : null));
-        this.betSuccess.set('Pari annulé.');
+    const sig = this.raceService.cancelBet(r.id);
+    effect(
+      () => {
+        const ok = sig();
+        if (ok) {
+          this.race.update((race: RaceModel | null) =>
+            race ? { ...race, betPonyId: undefined } : null,
+          );
+          this.betSuccess.set('Pari annulé.');
+        } else {
+          this.betError.set("Impossible d'annuler le pari.");
+        }
       },
-      error: () => this.betError.set("Impossible d'annuler le pari."),
-    });
+      { injector: this.injector },
+    );
   }
 
+  // renvoie le nom du poney sur lequel l'utilisateur a parié
   getBetPonyName(): string {
     const r = this.race();
     if (!r?.betPonyId) return '';
-    return r.ponies.find((p) => p.id === r.betPonyId)?.name ?? '';
+    return r.ponies.find((p: PonyModel) => p.id === r.betPonyId)?.name ?? '';
   }
 }
