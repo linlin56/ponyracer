@@ -60,6 +60,7 @@ import { PonyComponent } from '../pony/pony.component';
               </div>
             </div>
           }
+          <div class="finish-line"></div>
         </div>
 
         @if (status() === 'RUNNING') {
@@ -75,10 +76,10 @@ import { PonyComponent } from '../pony/pony.component';
     `
       .race-track {
         position: relative;
-        border: 1px solid #dee2e6;
+        border: 1px solid #8b5e3c;
         border-radius: 6px;
         padding: 1rem;
-        background: #f8f9fa;
+        background: linear-gradient(180deg, #c8a165 0%, #a0724a 50%, #7a5230 100%);
       }
       .pony-lane {
         width: 100%;
@@ -86,6 +87,24 @@ import { PonyComponent } from '../pony/pony.component';
       }
       .pony-pos {
         max-width: 70px;
+        position: relative;
+        z-index: 1;
+      }
+      .finish-line {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 6px;
+        height: 100%;
+        z-index: 0;
+        background: repeating-linear-gradient(
+          180deg,
+          #cc0000 0px,
+          #cc0000 10px,
+          #ffffff 10px,
+          #ffffff 20px
+        );
+        border-radius: 0 2px 2px 0;
       }
     `,
   ],
