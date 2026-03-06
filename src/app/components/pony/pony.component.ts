@@ -28,23 +28,24 @@ import { PonyModel } from '../../models/pony.model';
         flex-direction: column;
         align-items: center;
         cursor: pointer;
-        padding: 4px;
         border: 2px solid transparent;
         border-radius: 4px;
         transition: border-color 0.2s;
       }
       .pony-figure.selected {
-        border-color: #28a745;
+        border-color: #13d941;
       }
       .pony-img {
         /* le poney */
-        width: 70px;
-        height: 70px;
+        width: 50px;
+        height: 50px;
         object-fit: contain;
       }
       figcaption {
-        font-size: 0.75rem;
+        font-size: 0.5rem;
         text-align: center;
+        color: white;
+        text-shadow: 0 0 3px #000;
       }
       .boosted .pony-img {
         /* Quand le poney est boosté il est arc-en-ciel */

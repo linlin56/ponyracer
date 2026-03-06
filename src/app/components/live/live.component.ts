@@ -42,9 +42,9 @@ import { PonyComponent } from '../pony/pony.component';
           <div class="alert alert-danger">{{ error() }}</div>
         }
 
-        <div class="race-track mt-4">
+        <div class="race-track">
           @for (pony of ponies(); track pony.id) {
-            <div class="pony-lane d-flex align-items-center mb-3">
+            <div class="pony-lane ">
               <div
                 class="pony-pos"
                 [ngStyle]="{
@@ -79,14 +79,17 @@ import { PonyComponent } from '../pony/pony.component';
         border: 1px solid #8b5e3c;
         border-radius: 6px;
         padding: 1rem;
-        background: linear-gradient(180deg, #c8a165 0%, #a0724a 50%, #7a5230 100%);
+        background-image: url('/assets/terrain-course.png');
+        background-repeat: repeat-x;
+        background-size: auto 100%;
+        background-color: #a0724a;
+        image-rendering: pixelated;
       }
       .pony-lane {
         width: 100%;
         min-height: 90px;
       }
       .pony-pos {
-        max-width: 70px;
         position: relative;
         z-index: 1;
       }
@@ -94,7 +97,7 @@ import { PonyComponent } from '../pony/pony.component';
         position: absolute;
         top: 0;
         right: 0;
-        width: 6px;
+        width: 5px;
         height: 100%;
         z-index: 0;
         background: repeating-linear-gradient(
