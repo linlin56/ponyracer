@@ -29,7 +29,7 @@ export class WsService {
         });
       },
       () => {
-        // ignore; we cannot propagate error through signal directly
+        // erreur ignorée : le service n'expose pas de canal d'erreur dédié
       },
     );
   }
@@ -49,7 +49,7 @@ export class WsService {
         });
       },
       () => {
-        // ignore errors here
+        // erreurs ignorées ici également
       },
     );
   }

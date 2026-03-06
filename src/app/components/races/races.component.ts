@@ -4,7 +4,7 @@ import { Component, inject, OnInit, signal, Signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 // modèle de course
 import { RaceModel } from '../../models/race.model';
-// pipe personnalisé pour afficher "il y a X" (à partir de now)
+// pipe personnalisé pour afficher le départ de façon relative
 import { FromNowPipe } from '../../pipes/from-now.pipe';
 // service pour interagir avec l'API de courses
 import { RaceService } from '../../services/race.service';
@@ -17,7 +17,7 @@ import { PonyComponent } from '../pony/pony.component';
   standalone: true,
   imports: [RouterLink, PonyComponent, FromNowPipe],
   template: `
-    <h2 class="mt-3">Races</h2>
+    <h2 class="mt-3">Courses</h2>
     <!-- indicateur de chargement -->
     @if (loading()) {
       <div class="text-center mt-5">
@@ -39,9 +39,9 @@ import { PonyComponent } from '../pony/pony.component';
             <app-pony [pony]="pony" />
           }
         </div>
-        <!-- lien vers la page de détail/paris de la course -->
+        <!-- lien vers la page de détail et de pari de la course -->
         <a [routerLink]="['/races', race.id]" class="btn btn-primary btn-sm">
-          Bet on {{ race.name }}
+          Parier sur {{ race.name }}
         </a>
       </div>
       <hr />
@@ -71,7 +71,7 @@ export class RacesComponent implements OnInit {
   loading = signal(true);
   error = signal('');
 
-  // on s'abonne implicitement au signal ; plus d'observable dans le composant
+  // le composant consomme directement le signal, sans observable
   ngOnInit(): void {
     this.races = this.raceService.list('PENDING');
     this.loading.set(false); // chargé dès que le signal est initialisé

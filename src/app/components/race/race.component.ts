@@ -36,10 +36,10 @@ import { PonyComponent } from '../pony/pony.component';
           </p>
         }
 
-        <!-- lien vers le live tant que la course est en cours ou achevée -->
+        <!-- lien vers le direct tant que la course est en cours ou achevée -->
         @if (race()!.status === 'RUNNING' || race()!.status === 'FINISHED') {
           <a [routerLink]="['/races', race()!.id, 'live']" class="btn btn-primary mb-3">
-            Watch live!
+            Voir le direct
           </a>
         }
 
@@ -51,7 +51,7 @@ import { PonyComponent } from '../pony/pony.component';
           <div class="alert alert-success">{{ betSuccess() }}</div>
         }
 
-        <p class="text-muted">Click to bet on your favorite pony</p>
+        <p class="text-muted">Cliquez pour parier sur votre poney préféré</p>
         <!-- liste des poneys disponibles pour parier -->
         <div class="d-flex flex-wrap gap-3">
           @for (pony of race()!.ponies; track pony.id) {
@@ -95,7 +95,7 @@ export class RaceComponent implements OnInit, OnDestroy {
   private router = inject(Router);
 
   // signaux utilisés pour piloter l'interface
-  // signal local mutable que l'on utilisera pour les mises à jour
+  // signal local mutable utilisé pour les mises à jour
   race = signal<RaceModel | null>(null);
   loading = signal(true); // indicateur de chargement
   betError = signal(''); // message d'erreur de pari
@@ -105,7 +105,7 @@ export class RaceComponent implements OnInit, OnDestroy {
   // référence de l'intervalle du compte à rebours pour pouvoir l'annuler
   private countdownInterval?: ReturnType<typeof setInterval>;
 
-  // au démarrage du composant on récupère l'id de la course
+  // au démarrage du composant, on récupère l'id de la course
   // puis on appelle le service pour charger les données
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('raceId'));
@@ -136,8 +136,8 @@ export class RaceComponent implements OnInit, OnDestroy {
     }, 3000);
   }
 
-  // Intervalle qui met à jour le texte du compte à rebours
-  // tant que le départ n'est pas passé; redirige vers le live à zéro.
+  // intervalle qui met à jour le texte du compte à rebours
+  // tant que le départ n'est pas passé ; redirection vers le direct à zéro
   private startCountdown(race: RaceModel): void {
     const update = () => {
       const diff = moment(race.startInstant).diff(moment());

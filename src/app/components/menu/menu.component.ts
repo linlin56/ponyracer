@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { UserService } from '../../services/user.service';
 
-// la navbar de l'application, présente sur toutes les pages
+// barre de navigation de l'application, visible sur toutes les pages
 @Component({
   selector: 'app-menu',
   standalone: true,
@@ -26,7 +26,7 @@ import { UserService } from '../../services/user.service';
         <ul class="nav flex-column">
           <li class="nav-item">
             <a class="nav-link" routerLink="/races" (click)="toggleMenu()">
-              <i class="fa fa-flag mr-1"></i> Races
+              <i class="fa fa-flag mr-1"></i> Courses
             </a>
           </li>
           @if (currentUser()) {
@@ -49,9 +49,9 @@ import { UserService } from '../../services/user.service';
   `,
 })
 
-// Le menu de l'application contient des liens vers les pages
-// et affiche le nom de l'utilisateur connecté ainsi que son argent.
-// Il permet aussi de se déconnecter.
+// Le menu contient les liens de navigation,
+// affiche l'utilisateur connecté ainsi que son argent,
+// et permet aussi de se déconnecter.
 export class MenuComponent {
   private userService = inject(UserService);
   currentUser = this.userService.currentUser;

@@ -71,7 +71,7 @@ import { PonyComponent } from '../pony/pony.component';
         @if (status() === 'RUNNING') {
           <p class="text-muted">
             <i class="fa fa-info-circle"></i>
-            Cliquez sur votre poney parié pour lui donner un boost !
+            Cliquez sur votre poney parié pour lui donner un coup de boost !
           </p>
         }
       </div>
@@ -136,8 +136,7 @@ export class LiveComponent implements OnInit, OnDestroy {
   loading = signal(true);
   error = signal('');
 
-  // nous n'avons plus besoin de stocker l'abonnement manuellement;
-  // les effets remplacent les observables
+  // les mises à jour temps réel sont pilotées par des signaux de service
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('raceId'));
@@ -166,6 +165,7 @@ export class LiveComponent implements OnInit, OnDestroy {
       { injector: this.injector },
     );
 
+    // effet pour recevoir les mises à jour de la course en direct
     effect(
       () => {
         const data = this.wsService.raceUpdates();
@@ -181,6 +181,7 @@ export class LiveComponent implements OnInit, OnDestroy {
       { injector: this.injector },
     );
 
+    // effet pour recevoir les mises à jour de score de l'utilisateur
     effect(
       () => {
         const updated = this.wsService.scoreUpdates();
@@ -219,6 +220,6 @@ export class LiveComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // plus d'abonnement manuel à annuler
+    // aucun abonnement manuel à annuler avec les effets
   }
 }

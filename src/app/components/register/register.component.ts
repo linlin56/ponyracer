@@ -11,7 +11,7 @@ import { UserService } from '../../services/user.service';
   template: `
     <div class="row justify-content-center mt-5">
       <div class="col-md-5">
-        <h2>Register</h2>
+        <h2>Inscription</h2>
         <!-- affichage du message d'erreur si présent -->
         @if (error()) {
           <div class="alert alert-danger">{{ error() }}</div>
@@ -19,7 +19,7 @@ import { UserService } from '../../services/user.service';
         <!-- formulaire d'inscription avec liaison bidirectionnelle ngModel -->
         <form (ngSubmit)="onSubmit()">
           <div class="form-group mb-3">
-            <label for="login">Login</label>
+            <label for="login">Identifiant</label>
             <input
               type="text"
               id="login"
@@ -30,7 +30,7 @@ import { UserService } from '../../services/user.service';
             />
           </div>
           <div class="form-group mb-3">
-            <label for="password">Password</label>
+            <label for="password">Mot de passe</label>
             <input
               type="password"
               id="password"
@@ -41,7 +41,7 @@ import { UserService } from '../../services/user.service';
             />
           </div>
           <div class="form-group mb-3">
-            <label for="birthYear">Birth year</label>
+            <label for="birthYear">Annee de naissance</label>
             <input
               type="number"
               id="birthYear"
@@ -51,8 +51,8 @@ import { UserService } from '../../services/user.service';
               required
             />
           </div>
-          <button type="submit" class="btn btn-primary" [disabled]="loading()">Register</button>
-          <a routerLink="/login" class="btn btn-link ml-2">Already registered? Log in!</a>
+          <button type="submit" class="btn btn-primary" [disabled]="loading()">S'inscrire</button>
+          <a routerLink="/login" class="btn btn-link ml-2">Deja inscrit ? Se connecter</a>
         </form>
       </div>
     </div>
@@ -67,12 +67,12 @@ export class RegisterComponent {
   // champs du formulaire
   login = '';
   password = '';
-  birthYear: number = new Date().getFullYear() - 20; // par défaut 20 ans
-  // signaux pour état local
+  birthYear: number = new Date().getFullYear() - 20; // par défaut : 20 ans
+  // signaux pour l'état local
   loading = signal(false);
   error = signal('');
 
-  // appelé lorsque le formulaire est soumis
+  // appelé lors de la soumission du formulaire
   onSubmit(): void {
     this.loading.set(true);
     this.error.set('');

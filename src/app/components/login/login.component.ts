@@ -10,13 +10,13 @@ import { UserService } from '../../services/user.service';
   template: `
     <div class="row justify-content-center mt-5">
       <div class="col-md-5">
-        <h2>Log in</h2>
+        <h2>Connexion</h2>
         @if (error()) {
           <div class="alert alert-danger">{{ error() }}</div>
         }
         <form (ngSubmit)="onSubmit()">
           <div class="form-group mb-3">
-            <label for="login">Login</label>
+            <label for="login">Identifiant</label>
             <input
               type="email"
               id="login"
@@ -27,7 +27,7 @@ import { UserService } from '../../services/user.service';
             />
           </div>
           <div class="form-group mb-3">
-            <label for="password">Password</label>
+            <label for="password">Mot de passe</label>
             <input
               type="password"
               id="password"
@@ -37,7 +37,7 @@ import { UserService } from '../../services/user.service';
               required
             />
           </div>
-          <button type="submit" class="btn btn-primary" [disabled]="loading()">Log me in!</button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading()">Se connecter</button>
         </form>
       </div>
     </div>
@@ -57,6 +57,7 @@ export class LoginComponent {
     this.loading.set(true);
     this.error.set('');
     const sig = this.userService.authenticate(this.login, this.password);
+    // effet pour gérer la réponse de l'authentification
     effect(
       () => {
         const user = sig();

@@ -36,7 +36,7 @@ import { PonyModel } from '../../models/pony.model';
         border-color: #13d941;
       }
       .pony-img {
-        /* le poney */
+        /* image du poney */
         width: 50px;
         height: 50px;
         object-fit: contain;
@@ -48,7 +48,7 @@ import { PonyModel } from '../../models/pony.model';
         text-shadow: 0 0 3px #000;
       }
       .boosted .pony-img {
-        /* Quand le poney est boosté il est arc-en-ciel */
+        /* Quand le poney est boosté, son rendu devient arc-en-ciel */
         filter: hue-rotate(0deg) saturate(2);
         animation: rainbow 2s infinite linear;
       }
@@ -67,7 +67,7 @@ export class PonyComponent {
   ponyClicked = output<PonyModel>();
 
   getPonyImage(): string {
-    // Par défaut on affiche une image vide
+    // Par défaut, on utilise l'image correspondant à la couleur du poney
     const color = this.pony().color?.toLowerCase() ?? 'blue';
     return `/assets/ponies/pony_${color}.gif`;
   }
