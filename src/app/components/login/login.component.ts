@@ -1,22 +1,23 @@
 import { Component, effect, inject, Injector, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   template: `
     <div class="row justify-content-center mt-5">
       <div class="col-md-5">
-        <h2>Connexion</h2>
+        <h2>{{ 'login.title' | translate }}</h2>
         @if (error()) {
-          <div class="alert alert-danger">{{ error() }}</div>
+          <div class="alert alert-danger">{{ error() | translate }}</div>
         }
         <form (ngSubmit)="onSubmit()">
           <div class="form-group mb-3">
-            <label for="login">Identifiant</label>
+            <label for="login">{{ 'login.username' | translate }}</label>
             <input
               type="email"
               id="login"
@@ -27,7 +28,7 @@ import { UserService } from '../../services/user.service';
             />
           </div>
           <div class="form-group mb-3">
-            <label for="password">Mot de passe</label>
+            <label for="password">{{ 'login.password' | translate }}</label>
             <input
               type="password"
               id="password"
@@ -37,7 +38,9 @@ import { UserService } from '../../services/user.service';
               required
             />
           </div>
-          <button type="submit" class="btn btn-primary" [disabled]="loading()">Se connecter</button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading()">
+            {{ 'login.submit' | translate }}
+          </button>
         </form>
       </div>
     </div>
@@ -70,7 +73,7 @@ export class LoginComponent {
           return;
         }
         this.loading.set(false);
-        this.error.set('Identifiant ou mot de passe incorrect.');
+        this.error.set('login.error');
       },
       { injector: this.injector },
     );

@@ -1,25 +1,26 @@
 import { Component, effect, inject, Injector, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 import { UserService } from '../../services/user.service';
 
 // configuration du composant d'inscription
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, TranslatePipe],
   template: `
     <div class="row justify-content-center mt-5">
       <div class="col-md-5">
-        <h2>Inscription</h2>
+        <h2>{{ 'register.title' | translate }}</h2>
         <!-- affichage du message d'erreur si présent -->
         @if (error()) {
-          <div class="alert alert-danger">{{ error() }}</div>
+          <div class="alert alert-danger">{{ error() | translate }}</div>
         }
         <!-- formulaire d'inscription avec liaison bidirectionnelle ngModel -->
         <form (ngSubmit)="onSubmit()">
           <div class="form-group mb-3">
-            <label for="login">Identifiant</label>
+            <label for="login">{{ 'login.username' | translate }}</label>
             <input
               type="text"
               id="login"
@@ -30,7 +31,7 @@ import { UserService } from '../../services/user.service';
             />
           </div>
           <div class="form-group mb-3">
-            <label for="password">Mot de passe</label>
+            <label for="password">{{ 'login.password' | translate }}</label>
             <input
               type="password"
               id="password"
@@ -41,7 +42,7 @@ import { UserService } from '../../services/user.service';
             />
           </div>
           <div class="form-group mb-3">
-            <label for="birthYear">Annee de naissance</label>
+            <label for="birthYear">{{ 'register.birthYear' | translate }}</label>
             <input
               type="number"
               id="birthYear"
@@ -51,8 +52,12 @@ import { UserService } from '../../services/user.service';
               required
             />
           </div>
-          <button type="submit" class="btn btn-primary" [disabled]="loading()">S'inscrire</button>
-          <a routerLink="/login" class="btn btn-link ml-2">Deja inscrit ? Se connecter</a>
+          <button type="submit" class="btn btn-primary" [disabled]="loading()">
+            {{ 'register.submit' | translate }}
+          </button>
+          <a routerLink="/login" class="btn btn-link ml-2">{{
+            'register.alreadyRegistered' | translate
+          }}</a>
         </form>
       </div>
     </div>
@@ -89,7 +94,7 @@ export class RegisterComponent {
           return;
         }
         this.loading.set(false);
-        this.error.set('Une erreur est survenue.');
+        this.error.set('register.error');
       },
       { injector: this.injector },
     );

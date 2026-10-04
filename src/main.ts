@@ -1,9 +1,7 @@
 import { bootstrapApplication } from '@angular/platform-browser';
-import moment from 'moment';
+// locale française de moment, activée par TranslationService
 import 'moment/locale/fr';
 import { App } from './app/app';
 import { appConfig } from './app/app.config';
-
-moment.locale('fr');
 
 bootstrapApplication(App, appConfig).catch((err) => console.error(err));

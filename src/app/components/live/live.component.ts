@@ -3,6 +3,7 @@ import { Component, effect, inject, Injector, OnDestroy, OnInit, signal } from '
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PonyModel } from '../../models/pony.model';
 import { RaceModel } from '../../models/race.model';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 import { RaceService } from '../../services/race.service';
 import { UserService } from '../../services/user.service';
 import { WsService } from '../../services/ws.service';
@@ -11,7 +12,7 @@ import { PonyComponent } from '../pony/pony.component';
 @Component({
   selector: 'app-live',
   standalone: true,
-  imports: [RouterLink, PonyComponent, NgStyle],
+  imports: [RouterLink, PonyComponent, NgStyle, TranslatePipe],
   template: `
     @if (loading()) {
       <div class="text-center mt-5">
@@ -20,9 +21,11 @@ import { PonyComponent } from '../pony/pony.component';
     }
     @if (error()) {
       <div class="alert alert-danger mt-3">
-        {{ error() }}
+        {{ error() | translate }}
         <div class="mt-2">
-          <a routerLink="/races" class="btn btn-primary btn-sm">Retour aux courses</a>
+          <a routerLink="/races" class="btn btn-primary btn-sm">{{
+            'live.backToRaces' | translate
+          }}</a>
         </div>
       </div>
     }
@@ -32,11 +35,11 @@ import { PonyComponent } from '../pony/pony.component';
 
         @if (status() === 'FINISHED') {
           <div class="alert alert-info">
-            <h4>Course terminée !</h4>
+            <h4>{{ 'live.finished' | translate }}</h4>
             <!-- Affichage des gagnants -->
             @if (winners().length) {
               <p>
-                Gagnant(s) :
+                {{ 'live.winners' | translate }}
                 @for (w of winners(); track w.id) {
                   <i class="fa fa-trophy" style="color: gold"></i>
                   <strong> {{ w.name }} </strong>
@@ -44,7 +47,9 @@ import { PonyComponent } from '../pony/pony.component';
                 }
               </p>
             }
-            <a routerLink="/races" class="btn btn-primary mt-2">Retour aux courses</a>
+            <a routerLink="/races" class="btn btn-primary mt-2">{{
+              'live.backToRaces' | translate
+            }}</a>
           </div>
         }
         <div class="race-track">
@@ -71,14 +76,14 @@ import { PonyComponent } from '../pony/pony.component';
         @if (status() === 'RUNNING') {
           <p class="text-muted">
             <i class="fa fa-info-circle"></i>
-            Cliquez sur votre poney parié pour lui donner un coup de boost !
+            {{ 'live.boostHint' | translate }}
           </p>
         }
       </div>
     }
     @if (!loading() && !race() && !error()) {
       <div class="alert alert-warning mt-3">
-        La course en direct est indisponible pour le moment.
+        {{ 'live.unavailable' | translate }}
       </div>
     }
   `,
@@ -195,7 +200,7 @@ export class LiveComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       if (!this.race()) {
         this.loading.set(false);
-        this.error.set('Impossible de charger la course en direct.');
+        this.error.set('live.loadError');
       }
     }, 3000);
   }

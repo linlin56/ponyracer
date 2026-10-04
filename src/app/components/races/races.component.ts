@@ -6,6 +6,8 @@ import { RouterLink } from '@angular/router';
 import { RaceModel } from '../../models/race.model';
 // pipe personnalisé pour afficher le départ de façon relative
 import { FromNowPipe } from '../../pipes/from-now.pipe';
+// pipe de traduction
+import { TranslatePipe } from '../../pipes/translate.pipe';
 // service pour interagir avec l'API de courses
 import { RaceService } from '../../services/race.service';
 // composant enfant affichant un poney
@@ -15,9 +17,9 @@ import { PonyComponent } from '../pony/pony.component';
 @Component({
   selector: 'app-races',
   standalone: true,
-  imports: [RouterLink, PonyComponent, FromNowPipe],
+  imports: [RouterLink, PonyComponent, FromNowPipe, TranslatePipe],
   template: `
-    <h2 class="mt-3">Courses</h2>
+    <h2 class="mt-3">{{ 'races.title' | translate }}</h2>
     <!-- indicateur de chargement -->
     @if (loading()) {
       <div class="text-center mt-5">
@@ -26,7 +28,7 @@ import { PonyComponent } from '../pony/pony.component';
     }
     <!-- message d'erreur si la récupération a échoué -->
     @if (error()) {
-      <div class="alert alert-danger">{{ error() }}</div>
+      <div class="alert alert-danger">{{ error() | translate }}</div>
     }
     <!-- boucle sur les courses récupérées -->
     @for (race of races(); track race.id) {
@@ -41,14 +43,14 @@ import { PonyComponent } from '../pony/pony.component';
         </div>
         <!-- lien vers la page de détail et de pari de la course -->
         <a [routerLink]="['/races', race.id]" class="btn btn-primary btn-sm">
-          Parier sur {{ race.name }}
+          {{ 'races.bet' | translate: { name: race.name } }}
         </a>
       </div>
       <hr />
     }
     <!-- message si aucune course disponible après chargement -->
     @if (!loading() && races().length === 0 && !error()) {
-      <p class="text-muted">Aucune course disponible pour le moment. Réessayez plus tard.</p>
+      <p class="text-muted">{{ 'races.empty' | translate }}</p>
     }
   `,
   styles: [

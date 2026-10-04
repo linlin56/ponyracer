@@ -3,13 +3,14 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import moment from 'moment';
 import { PonyModel } from '../../models/pony.model';
 import { RaceModel } from '../../models/race.model';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 import { RaceService } from '../../services/race.service';
 import { PonyComponent } from '../pony/pony.component';
 
 @Component({
   selector: 'app-race',
   standalone: true,
-  imports: [RouterLink, PonyComponent],
+  imports: [RouterLink, PonyComponent, TranslatePipe],
   template: `
     <!-- affiche un spinner pendant le chargement de la course -->
     @if (loading()) {
@@ -18,7 +19,7 @@ import { PonyComponent } from '../pony/pony.component';
       </div>
     }
     @if (betError() && !race()) {
-      <div class="alert alert-danger mt-3">{{ betError() }}</div>
+      <div class="alert alert-danger mt-3">{{ betError() | translate }}</div>
     }
     <!-- une fois la course chargée, on expose les informations -->
     @if (race()) {
@@ -29,7 +30,7 @@ import { PonyComponent } from '../pony/pony.component';
         @if (race()!.status === 'PENDING') {
           <p class="text-muted">
             <i class="fa fa-clock-o mr-1"></i>
-            Départ dans
+            {{ 'race.startsIn' | translate }}
             <span class="badge badge-info font-weight-bold" style="font-size:1rem">
               {{ countdown() }}
             </span>
@@ -39,19 +40,21 @@ import { PonyComponent } from '../pony/pony.component';
         <!-- lien vers le direct tant que la course est en cours ou achevée -->
         @if (race()!.status === 'RUNNING' || race()!.status === 'FINISHED') {
           <a [routerLink]="['/races', race()!.id, 'live']" class="btn btn-primary mb-3">
-            Voir le direct
+            {{ 'race.watchLive' | translate }}
           </a>
         }
 
         <!-- messages d'erreur/succès lors du pari -->
         @if (betError()) {
-          <div class="alert alert-danger">{{ betError() }}</div>
+          <div class="alert alert-danger">{{ betError() | translate }}</div>
         }
         @if (betSuccess()) {
-          <div class="alert alert-success">{{ betSuccess() }}</div>
+          <div class="alert alert-success">
+            {{ betSuccess() | translate: { pony: getBetPonyName() } }}
+          </div>
         }
 
-        <p class="text-muted">Cliquez pour parier sur votre poney préféré</p>
+        <p class="text-muted">{{ 'race.clickToBet' | translate }}</p>
         <!-- liste des poneys disponibles pour parier -->
         <div class="d-flex flex-wrap gap-3">
           @for (pony of race()!.ponies; track pony.id) {
@@ -68,15 +71,17 @@ import { PonyComponent } from '../pony/pony.component';
           <div class="mt-3">
             <p class="text-success">
               <i class="fa fa-check-circle"></i>
-              Vous avez parié sur <strong>{{ getBetPonyName() }}</strong>
+              {{ 'race.betOn' | translate }} <strong>{{ getBetPonyName() }}</strong>
             </p>
-            <button class="btn btn-danger btn-sm" (click)="cancelBet()">Annuler le pari</button>
+            <button class="btn btn-danger btn-sm" (click)="cancelBet()">
+              {{ 'race.cancelBet' | translate }}
+            </button>
           </div>
         }
       </div>
     }
     @if (!loading() && !race() && !betError()) {
-      <div class="alert alert-warning mt-3">Impossible de charger cette course.</div>
+      <div class="alert alert-warning mt-3">{{ 'race.loadError' | translate }}</div>
     }
   `,
   styles: [
@@ -98,8 +103,8 @@ export class RaceComponent implements OnInit, OnDestroy {
   // signal local mutable utilisé pour les mises à jour
   race = signal<RaceModel | null>(null);
   loading = signal(true); // indicateur de chargement
-  betError = signal(''); // message d'erreur de pari
-  betSuccess = signal(''); // message de succès de pari
+  betError = signal(''); // clé de traduction du message d'erreur de pari
+  betSuccess = signal(''); // clé de traduction du message de succès de pari
   countdown = signal(''); // texte du compte à rebours
 
   // référence de l'intervalle du compte à rebours pour pouvoir l'annuler
@@ -131,7 +136,7 @@ export class RaceComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       if (!this.race()) {
         this.loading.set(false);
-        this.betError.set('Impossible de charger cette course.');
+        this.betError.set('race.loadError');
       }
     }, 3000);
   }
@@ -179,7 +184,7 @@ export class RaceComponent implements OnInit, OnDestroy {
         const updated = sig();
         if (updated) {
           this.race.set(updated);
-          this.betSuccess.set(`Pari placé sur ${pony.name} ! Bonne chance.`);
+          this.betSuccess.set('race.betPlaced');
         }
       },
       { injector: this.injector },
@@ -200,9 +205,9 @@ export class RaceComponent implements OnInit, OnDestroy {
           this.race.update((race: RaceModel | null) =>
             race ? { ...race, betPonyId: undefined } : null,
           );
-          this.betSuccess.set('Pari annulé.');
+          this.betSuccess.set('race.betCancelled');
         } else {
-          this.betError.set("Impossible d'annuler le pari.");
+          this.betError.set('race.cancelError');
         }
       },
       { injector: this.injector },
